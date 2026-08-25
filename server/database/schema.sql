@@ -8,6 +8,7 @@ CREATE TABLE users (
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('Admin', 'Security Officer', 'Gate Operator', 'Guard', 'Student', 'Proctor') NOT NULL,
+  is_head_security_officer BOOLEAN DEFAULT FALSE,
   phone VARCHAR(20),
   assigned_gate VARCHAR(100) NULL,
   is_active BOOLEAN DEFAULT TRUE,
@@ -213,10 +214,12 @@ INSERT INTO checkpoints (name, location, description) VALUES
 
 -- Test Users (Password: Password123)
 -- Replace with actual bcrypt hashes using node -e "const bcrypt = require('bcryptjs'); bcrypt.hash('Password123', 10).then(console.log);"
-INSERT INTO users (name, email, password_hash, role, phone) VALUES
-('Admin User', 'admin@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Admin', '01700000000'),
-('Security Officer', 'officer@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Security Officer', '01700000001'),
-('Gate Operator', 'gate@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Gate Operator', '01700000002'),
-('Guard 1', 'guard1@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Guard', '01700000003'),
-('Guard 2', 'guard2@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Guard', '01700000004'),
-('Student', 'student@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Student', '01700000005');
+INSERT INTO users (name, email, password_hash, role, is_head_security_officer, phone) VALUES 
+('Admin User', 'admin@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Admin', FALSE, '01700000000'), 
+('Security Officer', 'officer@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Security Officer', FALSE, '01700000001'), 
+('Gate Operator', 'gate@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Gate Operator', FALSE, '01700000002'), 
+('Guard 1', 'guard1@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Guard', FALSE, '01700000003'), 
+('Guard 2', 'guard2@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Guard', FALSE, '01700000004'), 
+('Student', 'student@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Student', FALSE, '01700000005'),
+('Security Officer 2', 'officer2@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Security Officer', TRUE, '01700000006'),
+('Security Officer 3', 'officer3@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Security Officer', FALSE, '01700000007');
