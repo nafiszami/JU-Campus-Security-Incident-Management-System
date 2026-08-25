@@ -116,7 +116,21 @@ class Visitor {
     const rows = await query(sql, [identityNumber]);
     return rows[0] || null;
   }
-
+  
+static async getStats() {
+    const sql = `
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'Inside' THEN 1 ELSE 0 END) as inside,
+        SUM(CASE WHEN DATE(created_at) = CURDATE() AND status = 'Registered' THEN 1 ELSE 0 END) as today_registered,
+        SUM(CASE WHEN DATE(entry_time) = CURDATE() THEN 1 ELSE 0 END) as today_entries,
+        SUM(CASE WHEN DATE(exit_time) = CURDATE() THEN 1 ELSE 0 END) as today_exits
+      FROM visitors
+    `;
+    const rows = await query(sql);
+    return rows[0] || {};
+  }
+}
 
 
 module.exports = Visitor;
