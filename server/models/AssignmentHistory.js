@@ -1,5 +1,118 @@
 const { query } = require('../config/database');
 
+const ACTIVE_ASSIGNMENT_STATUSES = ['Assigned', 'Under Investigation'];
+
+/**
+ * Retrieves a specific incident with reporter and assigned officer details.
+ *
+ * @param {number} id - ID of the incident.
+ * @returns {Promise<Object|null>} Incident details or null if not found.
+ */
+async function findIncidentById(id) {
+  const rows = await query(
+    `SELECT i.*,
+            reporter.name AS reporter_name,
+            officer.name AS assigned_officer_name
+     FROM incidents i
+     LEFT JOIN users reporter ON reporter.id = i.reported_by
+     LEFT JOIN users officer ON officer.id = i.assigned_to
+     WHERE i.id = ?`,
+    [id],
+  );
+
+  return rows[0] || null;
+}
+
+/**
+ * Retrieves incidents for the Head Security Officer.
+ *
+ * @param {string|null} status - Optional incident status filter.
+ * @returns {Promise<Array>} List of incidents.
+ */
+async function findIncidents(status = null) {
+  const where = status ? 'WHERE i.status = ?' : '';
+  const params = status ? [status] : [];
+
+  return query(
+    `SELECT i.*,
+            reporter.name AS reporter_name,
+            officer.name AS assigned_officer_name
+     FROM incidents i
+     LEFT JOIN users reporter ON reporter.id = i.reported_by
+     LEFT JOIN users officer ON officer.id = i.assigned_to
+     ${where}
+     ORDER BY i.created_at DESC`,
+    params,
+  );
+}
+
+/**
+ * Retrieves incidents assigned to a specific Security Officer.
+ *
+ * @param {number} officerId - ID of the Security Officer.
+ * @returns {Promise<Array>} Incidents assigned to the officer.
+ */
+async function findIncidentsAssignedTo(officerId) {
+  return query(
+    `SELECT i.*,
+            reporter.name AS reporter_name,
+            officer.name AS assigned_officer_name
+     FROM incidents i
+     LEFT JOIN users reporter ON reporter.id = i.reported_by
+     LEFT JOIN users officer ON officer.id = i.assigned_to
+     WHERE i.assigned_to = ?
+     ORDER BY i.updated_at DESC`,
+    [officerId],
+  );
+}
+
+/**
+ * Finds an active incident assigned to a Security Officer.
+ *
+ * @param {number} officerId - ID of the Security Officer.
+ * @param {number|null} excludeIncidentId - Optional incident ID to exclude.
+ * @returns {Promise<Object|null>} Active incident or null if none exists.
+ */
+async function findActiveIncidentForOfficer(
+  officerId,
+  excludeIncidentId = null,
+) {
+  const placeholders = ACTIVE_ASSIGNMENT_STATUSES.map(() => '?').join(', ');
+  const params = [officerId, ...ACTIVE_ASSIGNMENT_STATUSES];
+
+  let sql = `SELECT id, report_id, status
+             FROM incidents
+             WHERE assigned_to = ?
+             AND status IN (${placeholders})`;
+
+  if (excludeIncidentId) {
+    sql += ' AND id <> ?';
+    params.push(excludeIncidentId);
+  }
+
+  const rows = await query(sql, params);
+
+  return rows[0] || null;
+}
+
+/**
+ * Assigns an incident to a Security Officer.
+ *
+ * @param {number} id - ID of the incident.
+ * @param {number} officerId - ID of the Security Officer.
+ * @returns {Promise<Object|null>} Updated incident.
+ */
+async function assignIncidentToOfficer(id, officerId) {
+  await query(
+    `UPDATE incidents
+     SET assigned_to = ?, assigned_at = NOW(), status = 'Assigned'
+     WHERE id = ?`,
+    [officerId, id],
+  );
+
+  return findIncidentById(id);
+}
+
 /**
  * Records a new incident assignment in the assignment history.
  *
@@ -62,6 +175,11 @@ async function findAssignmentHistoryForIncident(incidentId) {
 }
 
 module.exports = {
+  findIncidentById,
+  findIncidents,
+  findIncidentsAssignedTo,
+  findActiveIncidentForOfficer,
+  assignIncidentToOfficer,
   recordAssignment,
   findAssignmentHistoryForIncident,
 };
