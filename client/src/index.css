@@ -125,7 +125,7 @@ button:disabled {
 
 .status-badge.Submitted { background: #ffd700; color: #856404; }
 .status-badge.Assigned { background: #17a2b8; color: white; }
-.status-badge['Under Investigation'] { background: #ff9800; color: white; }
+.status-badge.under-investigation { background: #ff9800; color: white; }
 .status-badge.Resolved { background: #28a745; color: white; }
 .status-badge.Closed { background: #6c757d; color: white; }
 .status-badge.Registered { background: #007bff; color: white; }
