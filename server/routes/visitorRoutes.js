@@ -16,7 +16,7 @@ const {
 
 /**
  * Visitor Routes
- * All routes require authentication except category list
+ * All routes require authentication
  */
 
 // Apply authentication middleware to all routes
@@ -54,6 +54,18 @@ router.post(
 );
 
 /**
+ * @route GET /api/visitors/categories
+ * @description Get all visitor categories with field configurations
+ * @access Gate Operator, Security Officer, Admin
+ * @returns {Object} 200 - Category configurations with fields and required fields
+ */
+router.get(
+  '/categories',
+  authorize(['Gate Operator', 'Security Officer', 'Admin']),
+  getCategories
+);
+
+/**
  * @route GET /api/visitors/search
  * @description Search visitors by query
  * @access Gate Operator, Security Officer, Admin
@@ -67,29 +79,6 @@ router.get(
   authorize(['Gate Operator', 'Security Officer', 'Admin']),
   searchVisitors
 );
-
-/**
- * @route GET /api/visitors/:id
- * @description Get visitor by database ID
- * @access Gate Operator, Security Officer, Admin
- * @param {string} id - Visitor database ID
- * @returns {Object} 200 - Visitor details
- * @returns {Object} 404 - Visitor not found
- * @returns {Object} 401 - Unauthorized
- */
-router.get(
-  '/:id',
-  authorize(['Gate Operator', 'Security Officer', 'Admin']),
-  getVisitorById
-);
-
-/**
- * @route GET /api/visitors/categories
- * @description Get all visitor categories with field configurations
- * @access Public (no authentication required)
- * @returns {Object} 200 - Category configurations with fields and required fields
- */
-router.get('/categories', getCategories);
 
 /**
  * @route GET /api/visitors/check-restricted
@@ -157,6 +146,21 @@ router.get(
   '/stats',
   authorize(['Security Officer', 'Admin']),
   getStats
+);
+
+/**
+ * @route GET /api/visitors/:id
+ * @description Get visitor by database ID
+ * @access Gate Operator, Security Officer, Admin
+ * @param {string} id - Visitor database ID
+ * @returns {Object} 200 - Visitor details
+ * @returns {Object} 404 - Visitor not found
+ * @returns {Object} 401 - Unauthorized
+ */
+router.get(
+  '/:id',
+  authorize(['Gate Operator', 'Security Officer', 'Admin']),
+  getVisitorById
 );
 
 module.exports = router;
