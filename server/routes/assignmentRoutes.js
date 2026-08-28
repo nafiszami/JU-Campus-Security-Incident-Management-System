@@ -1,6 +1,7 @@
 const express = require('express');
 
 const { authenticate } = require('../middleware/auth');
+const { loadCurrentUser } = require('../middleware/loadCurrentUser');
 
 const {
   authorize,
@@ -18,9 +19,10 @@ const {
 const router = express.Router();
 
 /**
- * Authenticate users and restrict access to Security Officers.
+ * Authenticate users, refresh req.user from the database, and
+ * restrict access to Security Officers.
  */
-router.use(authenticate, authorize(['Security Officer']));
+router.use(authenticate, loadCurrentUser, authorize(['Security Officer']));
 
 /**
  * Retrieves active Security Officers and their assignment availability.

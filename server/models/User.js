@@ -62,6 +62,24 @@ class User {
     await query(sql, [passwordHash, id]);
     return true;
   }
+
+  static async findUserById(id) {
+    const rows = await query(
+      `SELECT id, name, email, role, is_head_security_officer, is_active
+       FROM users WHERE id = ?`,
+      [id]
+    );
+    return rows[0] || null;
+  }
+
+  static async findActiveSecurityOfficers() {
+    return query(
+      `SELECT id, name, email, is_head_security_officer
+       FROM users
+       WHERE role = 'Security Officer' AND is_active = TRUE
+       ORDER BY name ASC`
+    );
+  }
 }
 
 module.exports = User;
