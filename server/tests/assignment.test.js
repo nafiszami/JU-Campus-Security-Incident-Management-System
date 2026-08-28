@@ -27,7 +27,22 @@ jest.mock('../models/AuditLog', () => ({
 
 jest.mock('../middleware/auth', () => ({
   authenticate: jest.fn((req, res, next) => {
-    req.user = { id: 1, role: 'Head Security Officer', is_head_security_officer: true };
+    req.user = {
+      id: 1,
+      role: 'Security Officer',
+      is_head_security_officer: true,
+    };
+    next();
+  }),
+}));
+
+jest.mock('../middleware/loadCurrentUser', () => ({
+  loadCurrentUser: jest.fn((req, res, next) => {
+    req.user = {
+      id: 1,
+      role: 'Security Officer',
+      is_head_security_officer: true,
+    };
     next();
   }),
 }));
@@ -42,7 +57,13 @@ jest.mock('../routes/authRoutes', () => {
   return express.Router();
 });
 
-const app = require('../app');
+const express = require('express');
+const assignmentRoutes = require('../routes/assignmentRoutes');
+
+const app = express();
+
+app.use(express.json());
+app.use('/api/assignments', assignmentRoutes);
 
 const {
   findIncidentById,
