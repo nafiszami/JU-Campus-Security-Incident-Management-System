@@ -204,6 +204,74 @@ class Visitor {
     const rows = await query(sql);
     return rows[0] || {};
   }
+
+  /**
+   * Process a visitor's campus entry.
+   *
+   * @param {number} id - Visitor database ID.
+   * @param {string} gate - Gate name where entry is processed.
+   * @param {number} operatorId - ID of the gate operator.
+   * @returns {Promise<Object|null>} Updated visitor or null if update failed.
+   */
+  static async processEntry(id, gate, operatorId) {
+    const sql = `
+      UPDATE visitors
+      SET status = 'Inside', entry_time = NOW(), entry_gate = ?, entered_by = ?
+      WHERE id = ? AND status = 'Registered'
+    `;
+    const result = await query(sql, [gate, operatorId, id]);
+    if (result.affectedRows === 0) return null;
+    return this.findById(id);
+  }
+
+  /**
+   * Process a visitor's campus exit.
+   *
+   * @param {number} id - Visitor database ID.
+   * @param {string} gate - Gate name where exit is processed.
+   * @param {number} operatorId - ID of the gate operator.
+   * @returns {Promise<Object|null>} Updated visitor or null if update failed.
+   */
+  static async processExit(id, gate, operatorId) {
+    const sql = `
+      UPDATE visitors
+      SET status = 'Exited', exit_time = NOW(), exit_gate = ?, exited_by = ?,
+          duration_minutes = TIMESTAMPDIFF(MINUTE, entry_time, NOW())
+      WHERE id = ? AND status = 'Inside'
+    `;
+    const result = await query(sql, [gate, operatorId, id]);
+    if (result.affectedRows === 0) return null;
+    return this.findById(id);
+  }
+
+  /**
+   * Get entry/exit history with optional date and category filters.
+   *
+   * @param {Object} filters - Filter options.
+   * @param {string} [filters.date_from] - Start date (YYYY-MM-DD).
+   * @param {string} [filters.date_to] - End date (YYYY-MM-DD).
+   * @param {string} [filters.category] - Visitor category.
+   * @returns {Promise<Array>} Array of visitor records with operator names.
+   */
+  static async getEntryExitHistory(filters = {}) {
+    const conditions = ['(v.entry_time IS NOT NULL OR v.exit_time IS NOT NULL)'];
+    const params = [];
+
+    if (filters.date_from) { conditions.push('DATE(v.entry_time) >= ?'); params.push(filters.date_from); }
+    if (filters.date_to) { conditions.push('DATE(v.entry_time) <= ?'); params.push(filters.date_to); }
+    if (filters.category) { conditions.push('v.category = ?'); params.push(filters.category); }
+
+    return query(
+      `SELECT v.*, u.name AS registered_by_name, e.name AS entered_by_name, x.name AS exited_by_name
+       FROM visitors v
+       LEFT JOIN users u ON v.registered_by = u.id
+       LEFT JOIN users e ON v.entered_by = e.id
+       LEFT JOIN users x ON v.exited_by = x.id
+       WHERE ${conditions.join(' AND ')}
+       ORDER BY v.entry_time DESC`,
+      params
+    );
+  }
 }
 
 module.exports = Visitor;
