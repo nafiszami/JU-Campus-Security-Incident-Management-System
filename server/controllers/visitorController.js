@@ -1,4 +1,6 @@
+const RestrictedVisitor = require('../models/RestrictedVisitor');
 const Visitor = require('../models/Visitor');
+
 
 /**
  * Generate a unique visitor ID
@@ -7,7 +9,7 @@ const Visitor = require('../models/Visitor');
 function generateVisitorId() {
   const now = new Date();
   const year = now.getFullYear();
-  const count = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  const count = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
   return `V-${year}-${count}`;
 }
 
@@ -63,6 +65,16 @@ async function registerVisitor(req, res) {
       return res.status(400).json({ error: 'Company name is required for Contractor' });
     }
 
+    // Check if visitor is restricted
+    const restricted = await RestrictedVisitor.checkActive(data.identity_number);
+    if (restricted) {
+      return res.status(403).json({
+        error: 'This visitor is restricted from entering campus',
+        reason: restricted.reason,
+        restriction_type: restricted.restriction_type,
+      });
+    }
+
     // Check for duplicate active registration
     const existing = await Visitor.findActiveByIdentity(data.identity_number);
     if (existing) {
@@ -96,7 +108,7 @@ async function registerVisitor(req, res) {
       vehicle_plate: data.vehicle_plate,
       event_name: data.event_name,
       event_pass: data.event_pass,
-      registered_by: 1, // TEMPORARY BYPASS: Hardcode user ID 1
+      registered_by: req.user.id,
       pass_valid_until: passValidUntil.toISOString().slice(0, 19).replace('T', ' '),
     });
 
@@ -202,7 +214,7 @@ async function getTodayHistory(req, res) {
  */
 async function getMyRegistrations(req, res) {
   try {
-    const visitors = await Visitor.findByOperator(1); // TEMPORARY BYPASS
+    const visitors = await Visitor.findByOperator(req.user.id);
     res.json(visitors);
   } catch (error) {
     console.error('Get my registrations error:', error);
@@ -225,8 +237,8 @@ async function checkRestricted(req, res) {
       return res.status(400).json({ error: 'Identity number is required' });
     }
 
-    // TEMPORARY BYPASS: Always return false
-    res.json({ restricted: false });
+    const restricted = await RestrictedVisitor.checkActive(identity_number);
+    res.json({ restricted: !!restricted, reason: restricted?.reason });
   } catch (error) {
     console.error('Check restricted error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -297,6 +309,89 @@ async function getStats(req, res) {
   }
 }
 
+
+
+const { recordAuditEntry } = require('../models/AuditLog');
+
+/**
+ * Process a visitor's campus entry.
+ * @route   PUT /api/visitors/:id/entry
+ * @access  Gate Operator, Security Officer, Admin
+ * @param {Object} req - Express request.
+ * @param {Object} res - Express response.
+ * @returns {Promise<void>}
+ */
+const processEntry = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const gate = req.user.assigned_gate || 'Main Gate';
+
+    const visitor = await Visitor.findById(id);
+    if (!visitor) return res.status(404).json({ error: 'Visitor not found' });
+    if (visitor.status === 'Inside') return res.status(400).json({ error: 'Visitor already inside campus' });
+    if (new Date(visitor.pass_valid_until) < new Date()) {
+      return res.status(400).json({ error: 'Visitor pass has expired' });
+    }
+
+    // Check restricted visitor list using existing RestrictedVisitor model
+    const restricted = await RestrictedVisitor.checkActive(visitor.identity_number);
+    if (restricted) {
+      await recordAuditEntry(req.user.id, 'RESTRICTED_ENTRY_ATTEMPT',
+        `Restricted visitor ${visitor.name} attempted entry`);
+      return res.status(403).json({ error: 'Restricted visitor cannot enter campus', reason: restricted.reason });
+    }
+
+    const updated = await Visitor.processEntry(id, gate, req.user.id);
+    await recordAuditEntry(req.user.id, 'VISITOR_ENTRY', `Visitor ${visitor.visitor_id} entered via ${gate}`);
+    return res.json({ message: 'Entry processed', visitor: updated });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Process a visitor's campus exit.
+ * @route   PUT /api/visitors/:id/exit
+ * @access  Gate Operator, Security Officer, Admin
+ * @param {Object} req - Express request.
+ * @param {Object} res - Express response.
+ * @returns {Promise<void>}
+ */
+const processExit = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const gate = req.user.assigned_gate || 'Main Gate';
+
+    const visitor = await Visitor.findById(id);
+    if (!visitor) return res.status(404).json({ error: 'Visitor not found' });
+    if (visitor.status !== 'Inside') return res.status(400).json({ error: 'Visitor has not entered campus' });
+
+    const updated = await Visitor.processExit(id, gate, req.user.id);
+    await recordAuditEntry(req.user.id, 'VISITOR_EXIT', `Visitor ${visitor.visitor_id} exited via ${gate}`);
+    return res.json({ message: 'Exit processed', visitor: updated });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get visitor entry/exit history with filters.
+ * @route   GET /api/visitors/history
+ * @access  Security Officer, Admin
+ * @param {Object} req - Express request.
+ * @param {Object} res - Express response.
+ * @returns {Promise<void>}
+ */
+const getEntryExitHistory = async (req, res, next) => {
+  try {
+    const { date_from, date_to, category } = req.query;
+    const history = await Visitor.getEntryExitHistory({ date_from, date_to, category });
+    return res.json(history);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   registerVisitor,
   searchVisitors,
@@ -307,4 +402,7 @@ module.exports = {
   checkRestricted,
   getCategories,
   getStats,
+  processEntry,
+  processExit,
+  getEntryExitHistory,
 };
