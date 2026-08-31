@@ -12,6 +12,9 @@ const {
   checkRestricted,
   getCategories,
   getStats,
+  processEntry,
+  processExit,
+  getEntryExitHistory,
 } = require('../controllers/visitorController');
 
 /**
@@ -162,5 +165,8 @@ router.get(
   authorize(['Gate Operator', 'Security Officer', 'Admin']),
   getVisitorById
 );
+router.put('/:id/entry', authenticate, authorize(['Gate Operator', 'Security Officer', 'Admin']), processEntry);
+router.put('/:id/exit',  authenticate, authorize(['Gate Operator', 'Security Officer', 'Admin']), processExit);
+router.get('/history',   authenticate, authorize(['Security Officer', 'Admin']), getEntryExitHistory);
 
 module.exports = router;
