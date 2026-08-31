@@ -257,6 +257,108 @@ const Incident = {
       limit,
     };
   },
+
+  /**
+   * Retrieve incidents with role-based scoping, optional filters, sorting, and pagination.
+   *
+   * Visibility rules:
+   *  - Student       → only their own reports (reportedBy = userId)
+   *  - Security Officer (not head) → only assigned reports (assignedTo = userId)
+   *  - Head Security Officer / Admin → all reports (no scope filter)
+   *
+   * @param {Object} options - Query options.
+   * @param {number}  [options.reportedBy]  - Scope to reports filed by this user (Student).
+   * @param {number}  [options.assignedTo]  - Scope to reports assigned to this user (Officer).
+   * @param {string}  [options.status]      - Filter by incident status ENUM value.
+   * @param {string}  [options.priority]    - Filter by priority ENUM value.
+   * @param {string}  [options.reportType]  - Filter by report_type ENUM value.
+   * @param {string}  [options.dateFrom]    - ISO date string — lower bound on created_at (inclusive).
+   * @param {string}  [options.dateTo]      - ISO date string — upper bound on created_at (inclusive).
+   * @param {string}  [options.sortBy='created_at'] - Column to sort by.
+   * @param {string}  [options.sortOrder='desc']    - Sort direction: 'asc' or 'desc'.
+   * @param {number}  [options.page=1]      - Page number (1-indexed).
+   * @param {number}  [options.limit=20]    - Records per page.
+   * @returns {Promise<{data: IncidentRecord[], total: number, page: number, limit: number}>}
+   */
+  async findAllWithFilters(options = {}) {
+    const {
+      reportedBy,
+      assignedTo,
+      status,
+      priority,
+      reportType,
+      dateFrom,
+      dateTo,
+      sortBy = 'created_at',
+      sortOrder = 'desc',
+      page = 1,
+      limit = 20,
+    } = options;
+
+    // Allowlist sortable columns to prevent SQL injection
+    const ALLOWED_SORT_COLUMNS = ['created_at', 'updated_at', 'priority', 'status', 'report_type'];
+    const safeSort = ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : 'created_at';
+    const safeOrder = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+    const conditions = [];
+    const params = [];
+
+    // Role-based scoping
+    if (reportedBy) {
+      conditions.push('reported_by = ?');
+      params.push(reportedBy);
+    }
+
+    if (assignedTo) {
+      conditions.push('assigned_to = ?');
+      params.push(assignedTo);
+    }
+
+    // Attribute filters
+    if (status) {
+      conditions.push('status = ?');
+      params.push(status);
+    }
+
+    if (priority) {
+      conditions.push('priority = ?');
+      params.push(priority);
+    }
+
+    if (reportType) {
+      conditions.push('report_type = ?');
+      params.push(reportType);
+    }
+
+    // Date range filters (inclusive)
+    if (dateFrom) {
+      conditions.push('DATE(created_at) >= ?');
+      params.push(dateFrom);
+    }
+
+    if (dateTo) {
+      conditions.push('DATE(created_at) <= ?');
+      params.push(dateTo);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const countRows = await query(`SELECT COUNT(*) AS total FROM incidents ${whereClause}`, params);
+    const { total } = countRows[0];
+
+    const offset = (page - 1) * limit;
+    const dataRows = await query(
+      `SELECT * FROM incidents ${whereClause} ORDER BY ${safeSort} ${safeOrder} LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
+
+    return {
+      data: dataRows,
+      total,
+      page,
+      limit,
+    };
+  },
 };
 
 module.exports = {
