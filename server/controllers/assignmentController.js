@@ -6,7 +6,7 @@ const {
   assignIncidentToOfficer,
   recordAssignment,
   findAssignmentHistoryForIncident,
-} = require('../models/AssignmentHistory');
+} = require('../models/IncidentQuery');
 
 const {
   findUserById,

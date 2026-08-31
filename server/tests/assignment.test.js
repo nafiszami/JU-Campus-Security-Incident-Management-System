@@ -6,7 +6,7 @@
 
 const request = require('supertest');
 
-jest.mock('../models/AssignmentHistory', () => ({
+jest.mock('../models/IncidentQuery', () => ({
   findIncidentById: jest.fn(),
   findIncidents: jest.fn(),
   findIncidentsAssignedTo: jest.fn(),
@@ -73,7 +73,7 @@ const {
   assignIncidentToOfficer,
   recordAssignment,
   findAssignmentHistoryForIncident,
-} = require('../models/AssignmentHistory');
+} = require('../models/IncidentQuery');
 
 const {
   findUserById,

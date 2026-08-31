@@ -174,6 +174,58 @@ async function findAssignmentHistoryForIncident(incidentId) {
   );
 }
 
+
+
+// Sprint 2 
+// ===============================================
+
+
+/**
+ * Updates the status and related tracking fields of an incident.
+ *
+ * Used for Sprint 2 investigation status changes and closure. Fields
+ * left undefined or false are not touched, so callers only need to
+ * pass whatever this particular transition actually affects.
+ *
+ * @param {number} id - ID of the incident.
+ * @param {Object} updates - Fields to update.
+ * @param {string} updates.status - New status value.
+ * @param {string} [updates.investigationSummary] - Investigation findings,
+ * recorded when moving a report to Resolved.
+ * @param {boolean} [updates.markResolvedNow] - Whether to stamp resolved_at with the current time.
+ * @param {boolean} [updates.markClosedNow] - Whether to stamp closed_at with the current time.
+ * @returns {Promise<Object|null>} Updated incident.
+ */
+async function updateIncidentStatusFields(id, {
+  status,
+  investigationSummary,
+  markResolvedNow,
+  markClosedNow,
+}) {
+  const fields = ['status = ?'];
+  const values = [status];
+
+  if (investigationSummary !== undefined) {
+    fields.push('investigation_notes = ?');
+    values.push(investigationSummary);
+  }
+  if (markResolvedNow) {
+    fields.push('resolved_at = NOW()');
+  }
+  if (markClosedNow) {
+    fields.push('closed_at = NOW()');
+  }
+
+  values.push(id);
+
+  await query(
+    `UPDATE incidents SET ${fields.join(', ')} WHERE id = ?`,
+    values,
+  );
+
+  return findIncidentById(id);
+}
+
 module.exports = {
   findIncidentById,
   findIncidents,
@@ -182,4 +234,5 @@ module.exports = {
   assignIncidentToOfficer,
   recordAssignment,
   findAssignmentHistoryForIncident,
+  updateIncidentStatusFields,
 };
