@@ -152,6 +152,13 @@ router.get(
 );
 
 /**
+ * @route GET /api/visitors/history
+ * @description Get entry/exit history
+ * @access Security Officer, Admin
+ */
+router.get('/history', authenticate, authorize(['Gate Operator', 'Security Officer', 'Admin']), getEntryExitHistory);
+
+/**
  * @route GET /api/visitors/:id
  * @description Get visitor by database ID
  * @access Gate Operator, Security Officer, Admin
@@ -167,6 +174,5 @@ router.get(
 );
 router.put('/:id/entry', authenticate, authorize(['Gate Operator', 'Security Officer', 'Admin']), processEntry);
 router.put('/:id/exit',  authenticate, authorize(['Gate Operator', 'Security Officer', 'Admin']), processExit);
-router.get('/history',   authenticate, authorize(['Security Officer', 'Admin']), getEntryExitHistory);
 
 module.exports = router;
