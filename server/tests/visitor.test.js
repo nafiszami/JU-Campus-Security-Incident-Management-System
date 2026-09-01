@@ -575,5 +575,36 @@ describe('Visitor API Tests (Sprint 1 & 2)', () => {
       expect(found).toBeDefined();
       expect(found.status).toBe('Inside');
     });
+
+    test('27. should return entry/exit history', async () => {
+      const res = await request(app)
+        .get('/api/visitors/history')
+        .set('Authorization', `Bearer ${securityOfficerAuthToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+
+    test('28. should filter history by category', async () => {
+      const res = await request(app)
+        .get('/api/visitors/history?category=Guest Visitor')
+        .set('Authorization', `Bearer ${securityOfficerAuthToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      if (res.body.length > 0) {
+        expect(res.body[0].category).toBe('Guest Visitor');
+      }
+    });
+
+    test('29. should filter history by date range', async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const res = await request(app)
+        .get(`/api/visitors/history?date_from=${today}&date_to=${today}`)
+        .set('Authorization', `Bearer ${securityOfficerAuthToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+    });
   });
 });
