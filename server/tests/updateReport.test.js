@@ -139,5 +139,36 @@ describe('Update Report API', () => {
       markResolvedNow: true,
     });
   });
+
+    /**
+   * A report must move through Under Investigation before it can be
+   * Resolved - skipping straight from Assigned is not a valid
+   * transition.
+   */
+  it('should fail when skipping directly from Assigned to Resolved', async () => {
+    findIncidentById.mockResolvedValue({ ...incident, status: 'Assigned' });
+
+    const res = await request(app)
+      .patch('/api/reports/4/status')
+      .send({ status: 'Resolved', investigationSummary: 'Trying to skip ahead.' });
+
+    expect(res.status).toBe(400);
+    expect(updateIncidentStatusFields).not.toHaveBeenCalled();
+  });
+
+  /**
+   * A Closed report is read-only - no status change should be
+   * accepted through this endpoint once it reaches Closed.
+   */
+  it('should fail to change the status of a Closed report', async () => {
+    findIncidentById.mockResolvedValue({ ...incident, status: 'Closed' });
+
+    const res = await request(app)
+      .patch('/api/reports/4/status').send({ status: 'Under Investigation' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('This report is closed and cannot be modified.');
+    expect(updateIncidentStatusFields).not.toHaveBeenCalled();
+  });
   
 });

@@ -6,6 +6,16 @@ const {
 const { recordAuditEntry } = require('../models/AuditLog');
 
 /**
+ * Maps each status to the single status it is allowed to move to
+ * through the investigation status endpoint. Closing is handled by
+ * its own endpoint and is intentionally not reachable from here.
+ */
+const VALID_NEXT_STATUS = {
+  Assigned: 'Under Investigation',
+  'Under Investigation': 'Resolved',
+};
+
+/**
  * Checks whether the logged-in user is the Security Officer currently
  * assigned to an incident.
  *
@@ -29,9 +39,21 @@ async function updateInvestigationStatus(req, res) {
   const { status: nextStatus, investigationSummary } = req.body;
   const incident = await findIncidentById(id);
 
+  if (incident.status === 'Closed') {
+    return res.status(400).json({
+      error: 'This report is closed and cannot be modified.',
+    });
+  }
+
   if (!isAssignedOfficer(incident, req.user)) {
     return res.status(403).json({
       error: 'Only the assigned Security Officer can update this report.',
+    });
+  }
+
+  if (!nextStatus || VALID_NEXT_STATUS[incident.status] !== nextStatus) {
+    return res.status(400).json({
+      error: `Cannot change status from ${incident.status} to ${nextStatus || 'the requested value'}.`,
     });
   }
 
