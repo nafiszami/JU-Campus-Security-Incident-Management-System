@@ -26,7 +26,7 @@ function isAssignedOfficer(incident, user) {
  */
 async function updateInvestigationStatus(req, res) {
   const { id } = req.params;
-  const { status: nextStatus } = req.body;
+  const { status: nextStatus, investigationSummary } = req.body;
   const incident = await findIncidentById(id);
 
   if (!isAssignedOfficer(incident, req.user)) {
@@ -35,7 +35,17 @@ async function updateInvestigationStatus(req, res) {
     });
   }
 
-  const updated = await updateIncidentStatusFields(id, { status: nextStatus });
+  if (nextStatus === 'Resolved' && !String(investigationSummary || '').trim()) {
+    return res.status(400).json({
+      error: 'Investigation findings are required to mark this report as Resolved.',
+    });
+  }
+
+  const updated = await updateIncidentStatusFields(id, {
+    status: nextStatus,
+    investigationSummary: nextStatus === 'Resolved' ? investigationSummary : undefined,
+    markResolvedNow: nextStatus === 'Resolved',
+  });
 
   await recordAuditEntry(
     req.user.id,

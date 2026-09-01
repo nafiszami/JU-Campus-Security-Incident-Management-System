@@ -80,7 +80,11 @@ describe('Update Report API', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('Under Investigation');
-    expect(updateIncidentStatusFields).toHaveBeenCalledWith('4', { status: 'Under Investigation' });
+    expect(updateIncidentStatusFields).toHaveBeenCalledWith('4', {
+      status: 'Under Investigation',
+      investigationSummary: undefined,
+      markResolvedNow: false,
+    });
     expect(recordAuditEntry).toHaveBeenCalled();
   });
 
@@ -98,4 +102,42 @@ describe('Update Report API', () => {
     expect(res.body.error).toBe('Only the assigned Security Officer can update this report.');
     expect(updateIncidentStatusFields).not.toHaveBeenCalled();
   });
+    /**
+   * Marking a report Resolved without investigation findings must
+   * be rejected before anything is written to the database.
+   */
+  it('should fail to resolve a report with no investigation findings', async () => {
+    findIncidentById.mockResolvedValue({ ...incident, status: 'Under Investigation' });
+
+    const res = await request(app)
+      .patch('/api/reports/4/status').send({ status: 'Resolved' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Investigation findings are required to mark this report as Resolved.');
+    expect(updateIncidentStatusFields).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Resolving a report with findings provided must store those
+   * findings and stamp resolved_at on the incident.
+   */
+  it('should successfully resolve a report and store the findings', async () => {
+    findIncidentById.mockResolvedValue({ ...incident, status: 'Under Investigation' });
+    updateIncidentStatusFields.mockResolvedValue({
+      ...incident, status: 'Resolved', investigation_notes: 'Reviewed CCTV, matter confirmed.',
+    });
+
+    const res = await request(app)
+      .patch('/api/reports/4/status')
+      .send({ status: 'Resolved', investigationSummary: 'Reviewed CCTV, matter confirmed.' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('Resolved');
+    expect(updateIncidentStatusFields).toHaveBeenCalledWith('4', {
+      status: 'Resolved',
+      investigationSummary: 'Reviewed CCTV, matter confirmed.',
+      markResolvedNow: true,
+    });
+  });
+  
 });
