@@ -61,6 +61,21 @@ CREATE TABLE assignment_history (
   FOREIGN KEY (assigned_by) REFERENCES users(id)
 );
 
+-- Status History Table
+CREATE TABLE IF NOT EXISTS status_history (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  incident_id INT NOT NULL,
+  changed_by INT NOT NULL,
+  old_status VARCHAR(50) NULL,
+  new_status VARCHAR(50) NOT NULL,
+  notes TEXT NULL,
+  changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_incident (incident_id),
+  INDEX idx_changed_at (changed_at),
+  FOREIGN KEY (incident_id) REFERENCES incidents(id) ON DELETE CASCADE,
+  FOREIGN KEY (changed_by) REFERENCES users(id)
+);
+
 -- Visitors Table
 CREATE TABLE visitors (
   id INT PRIMARY KEY AUTO_INCREMENT,
