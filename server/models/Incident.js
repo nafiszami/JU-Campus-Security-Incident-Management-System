@@ -168,13 +168,24 @@ const Incident = {
   },
 
   /**
-   * Find an incident by its primary key.
+   * Find an incident by its primary key with reporter and assigned officer details.
    *
    * @param {number} id - The incident primary key.
    * @returns {Promise<IncidentRecord|null>} The incident record or null if not found.
    */
   async findById(id) {
-    const rows = await query('SELECT * FROM incidents WHERE id = ?', [id]);
+    const rows = await query(
+      `SELECT i.*,
+              reporter.name AS reporter_name,
+              reporter.email AS reporter_email,
+              officer.name AS assigned_officer_name,
+              officer.email AS assigned_officer_email
+       FROM incidents i
+       LEFT JOIN users reporter ON reporter.id = i.reported_by
+       LEFT JOIN users officer ON officer.id = i.assigned_to
+       WHERE i.id = ?`,
+      [id]
+    );
     return rows.length > 0 ? rows[0] : null;
   },
 
@@ -358,6 +369,26 @@ const Incident = {
       page,
       limit,
     };
+  },
+
+  /**
+   * Retrieve the status change timeline for a specific incident report.
+   *
+   * @param {number} incidentId - The incident primary key.
+   * @returns {Promise<Array<Object>>} List of status history entries ordered by changed_at ASC.
+   */
+  async getTimeline(incidentId) {
+    const rows = await query(
+      `SELECT sh.*,
+              u.name AS changed_by_name,
+              u.role AS changed_by_role
+       FROM status_history sh
+       LEFT JOIN users u ON u.id = sh.changed_by
+       WHERE sh.incident_id = ?
+       ORDER BY sh.changed_at ASC`,
+      [incidentId]
+    );
+    return rows;
   },
 };
 
