@@ -223,5 +223,34 @@ describe('Update Report API', () => {
     expect(res.status).toBe(403);
     expect(updateIncidentStatusFields).not.toHaveBeenCalled();
   });
+
+    /**
+   * A report cannot be closed until it has actually reached the
+   * Resolved status - closing straight from Under Investigation is
+   * not a valid transition.
+   */
+  it('should fail to close a report that is not yet Resolved', async () => {
+    loginAs(headOfficer);
+    findIncidentById.mockResolvedValue({ ...incident, status: 'Under Investigation' });
+
+    const res = await request(app).put('/api/reports/4/close');
+
+    expect(res.status).toBe(400);
+    expect(updateIncidentStatusFields).not.toHaveBeenCalled();
+  });
+
+  /**
+   * A report that has already been closed cannot be closed again -
+   * it should be left untouched, not re-processed.
+   */
+  it('should fail to close a report that is already Closed', async () => {
+    loginAs(headOfficer);
+    findIncidentById.mockResolvedValue({ ...incident, status: 'Closed' });
+
+    const res = await request(app).put('/api/reports/4/close');
+
+    expect(res.status).toBe(400);
+    expect(updateIncidentStatusFields).not.toHaveBeenCalled();
+  });
   
 });

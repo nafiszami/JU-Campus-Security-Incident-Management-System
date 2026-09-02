@@ -89,9 +89,21 @@ async function closeReport(req, res) {
   const { id } = req.params;
   const incident = await findIncidentById(id);
 
+  if (incident.status === 'Closed') {
+    return res.status(400).json({
+      error: 'This report is already closed.',
+    });
+  }
+
   if (req.user.role !== 'Security Officer' || !req.user.is_head_security_officer) {
     return res.status(403).json({
       error: 'Only the Head Security Officer can close this report.',
+    });
+  }
+
+  if (incident.status !== 'Resolved') {
+    return res.status(400).json({
+      error: 'A report can only be closed after it has been marked Resolved.',
     });
   }
 
