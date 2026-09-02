@@ -56,6 +56,30 @@ const {
 
 const { recordAuditEntry } = require('../models/AuditLog');
 
+const { authenticate } = require('../middleware/auth');
+const { loadCurrentUser } = require('../middleware/loadCurrentUser');
+
+const headOfficer = { id: 7, role: 'Security Officer', is_head_security_officer: true };
+
+/**
+ * Overrides the default authenticated user for exactly one upcoming
+ * request, since the module-level mocks always log in as the same
+ * assigned officer otherwise.
+ *
+ * @param {Object} user - The user to authenticate as for one request.
+ * @returns {void}
+ */
+function loginAs(user) {
+  authenticate.mockImplementationOnce((req, res, next) => {
+    req.user = user;
+    next();
+  });
+  loadCurrentUser.mockImplementationOnce((req, res, next) => {
+    req.user = user;
+    next();
+  });
+}
+
 describe('Update Report API', () => {
   const incident = {
     id: 4, report_id: 'INC-2026-0004', status: 'Assigned', assigned_to: 5,
@@ -168,6 +192,35 @@ describe('Update Report API', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('This report is closed and cannot be modified.');
+    expect(updateIncidentStatusFields).not.toHaveBeenCalled();
+  });
+
+    /**
+   * A Head Security Officer reviewing a Resolved report should be
+   * able to close it, moving it to its final Closed state.
+   */
+  it('should allow a Head Security Officer to close a Resolved report', async () => {
+    loginAs(headOfficer);
+    findIncidentById.mockResolvedValue({ ...incident, status: 'Resolved' });
+    updateIncidentStatusFields.mockResolvedValue({ ...incident, status: 'Closed' });
+
+    const res = await request(app).put('/api/reports/4/close');
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('Closed');
+    expect(recordAuditEntry).toHaveBeenCalled();
+  });
+
+  /**
+   * The Security Officer assigned to a report is not the one
+   * authorized to close it - only the Head Security Officer can.
+   */
+  it('should fail when a non-head officer tries to close a report', async () => {
+    findIncidentById.mockResolvedValue({ ...incident, status: 'Resolved' });
+
+    const res = await request(app).put('/api/reports/4/close');
+
+    expect(res.status).toBe(403);
     expect(updateIncidentStatusFields).not.toHaveBeenCalled();
   });
   

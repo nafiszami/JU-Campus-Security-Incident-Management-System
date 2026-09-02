@@ -78,6 +78,38 @@ async function updateInvestigationStatus(req, res) {
   return res.json(updated);
 }
 
+/**
+ * Closes a Resolved incident report.
+ *
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @returns {Promise<Object>} JSON response containing the updated incident.
+ */
+async function closeReport(req, res) {
+  const { id } = req.params;
+  const incident = await findIncidentById(id);
+
+  if (req.user.role !== 'Security Officer' || !req.user.is_head_security_officer) {
+    return res.status(403).json({
+      error: 'Only the Head Security Officer can close this report.',
+    });
+  }
+
+  const updated = await updateIncidentStatusFields(id, {
+    status: 'Closed',
+    markClosedNow: true,
+  });
+
+  await recordAuditEntry(
+    req.user.id,
+    'CLOSE_REPORT',
+    `Closed report ${incident.report_id}`,
+  );
+
+  return res.json(updated);
+}
+
 module.exports = {
   updateInvestigationStatus,
+  closeReport,
 };

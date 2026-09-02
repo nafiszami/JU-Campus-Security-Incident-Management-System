@@ -4,7 +4,7 @@ const { authenticate } = require('../middleware/auth');
 const { loadCurrentUser } = require('../middleware/loadCurrentUser');
 const { authorize } = require('../middleware/role');
 
-const { updateInvestigationStatus } = require('../controllers/updateReportController');
+const { updateInvestigationStatus, closeReport } = require('../controllers/updateReportController');
 
 const router = express.Router();
 
@@ -29,5 +29,18 @@ router.use(authenticate, loadCurrentUser, authorize(['Security Officer']));
  * @returns {Object} Updated incident report.
  */
 router.patch('/:id/status', updateInvestigationStatus);
+
+/**
+ * Closes a Resolved incident report.
+ *
+ * Only the Head Security Officer may call this.
+ *
+ * @route PUT /:id/close
+ * @middleware authenticate
+ * @middleware authorize
+ * @param {number} id - ID of the incident report.
+ * @returns {Object} Updated incident report.
+ */
+router.put('/:id/close', closeReport);
 
 module.exports = router;
