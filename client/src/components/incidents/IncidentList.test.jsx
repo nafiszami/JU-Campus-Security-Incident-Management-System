@@ -389,5 +389,29 @@ describe("IncidentList Component", () => {
         })
       );
     });
+
+    it("calls onView callback with selected incident when View button is clicked", async () => {
+      incidentService.getIncidents.mockResolvedValueOnce({
+        success: true,
+        data: mockIncidents,
+        pagination: { total: 2, page: 1, limit: 20 },
+      });
+
+      const onViewMock = jest.fn();
+
+      await act(async () => {
+        root.render(<IncidentList onView={onViewMock} />);
+      });
+
+      const viewButtons = container.querySelectorAll(".btn-view-report");
+      expect(viewButtons.length).toBe(2);
+
+      await act(async () => {
+        viewButtons[0].click();
+      });
+
+      expect(onViewMock).toHaveBeenCalledTimes(1);
+      expect(onViewMock).toHaveBeenCalledWith(mockIncidents[0]);
+    });
   });
 });
