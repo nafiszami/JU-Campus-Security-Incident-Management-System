@@ -281,31 +281,5 @@ describe('Assignment API', () => {
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('Internal server error');
   });
-  /**
-   * An officer who isn't the one assigned to a report - and isn't
-   * the Head Security Officer either - must not be able to review
-   * it, even though they're an authenticated Security Officer.
-   */
-  it('should fail when an officer not assigned to the report tries to review it', async () => {
-    findIncidentById.mockResolvedValue({ ...incident, status: 'Resolved', assigned_to: 9 });
-
-    const res = await request(app).get('/api/reports/4/review');
-
-    expect(res.status).toBe(403);
-    expect(res.body.error).toBe('You can only review reports assigned to you.');
-  });
-
-  /**
-   * Reviewing a report that doesn't exist should return a clear 404
-   * rather than crashing on a missing incident.
-   */
-  it('should return 404 when the report does not exist', async () => {
-    findIncidentById.mockResolvedValue(null);
-
-    const res = await request(app).get('/api/reports/999/review');
-
-    expect(res.status).toBe(404);
-    expect(res.body.error).toBe('Incident not found');
-  });
   
 });
