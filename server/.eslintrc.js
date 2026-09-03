@@ -16,3 +16,4 @@ module.exports = {
     'no-param-reassign': 'off',
   },
 };
+module.exports.rules.camelcase = 'off';
