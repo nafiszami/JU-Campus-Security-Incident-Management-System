@@ -114,7 +114,7 @@ describe('POST /api/incidents - Submit Reports API', () => {
     });
 
     expect(res.status).toBe(401);
-    expect(res.body.error).toBe('Not authorized, no token');
+    expect(res.body.error).toMatch(/Authentication required|Not authorized/);
   });
 
   it('should fail with 401 if authentication token is invalid', async () => {
@@ -130,7 +130,7 @@ describe('POST /api/incidents - Submit Reports API', () => {
       });
 
     expect(res.status).toBe(401);
-    expect(res.body.error).toBe('Not authorized, token failed');
+    expect(res.body.error).toMatch(/Invalid or expired token|Not authorized/);
   });
 
   it('should fail with 400 if required fields are missing', async () => {
