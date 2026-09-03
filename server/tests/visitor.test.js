@@ -5,9 +5,9 @@ if (!process.env.JWT_SECRET) {
 }
 
 const request = require('supertest');
+const bcrypt = require('bcryptjs');
 const app = require('../app');
 const { query } = require('../config/database');
-const bcrypt = require('bcryptjs');
 
 describe('Visitor API Tests (Sprint 1 & 2)', () => {
   // Authentication tokens

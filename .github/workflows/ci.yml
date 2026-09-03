@@ -72,7 +72,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./client
-        run: npm ci
+        run: npm install
 
       - name: Build
         working-directory: ./client

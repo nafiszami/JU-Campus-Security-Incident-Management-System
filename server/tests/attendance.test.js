@@ -1,7 +1,9 @@
+/* eslint-disable no-undef, no-unused-vars */
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const app = require('../app');
 const Attendance = require('../models/Attendance');
+
 jest.mock('../models/Attendance');
 describe('Guard Attendance API (Sprint 2)', () => {
   let guardToken;

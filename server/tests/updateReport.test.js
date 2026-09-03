@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 const request = require('supertest');
 
 jest.mock('../models/IncidentQuery', () => ({

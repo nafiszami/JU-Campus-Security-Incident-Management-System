@@ -153,7 +153,7 @@ class RestrictedVisitor {
     }
 
     if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
+      sql += ` WHERE ${  conditions.join(' AND ')}`;
     }
 
     sql += ' ORDER BY r.created_at DESC';

@@ -16,6 +16,7 @@ class Attendance {
     ]);
     return rows[0] || null;
   }
+
   /**
    * Find attendance record by ID.
    * @param {number} id - Attendance ID.
@@ -30,6 +31,7 @@ class Attendance {
     );
     return rows[0] || null;
   }
+
   /**
    * Create a new attendance record.
    * @param {Object} data - Attendance data.
@@ -49,6 +51,7 @@ class Attendance {
     );
     return this.findById(result.insertId);
   }
+
   /**
    * Record guard check-out time.
    * @param {number} scheduleId - Schedule ID.
@@ -64,6 +67,7 @@ class Attendance {
     );
     return this.findBySchedule(scheduleId, date);
   }
+
   /**
    * Get daily attendance summary counts.
    * @param {string} date - Date (YYYY-MM-DD).
@@ -82,6 +86,7 @@ class Attendance {
     );
     return rows[0] || {};
   }
+
   /**
    * Get attendance history for a specific guard.
    * @param {number} guardId - Guard user ID.
@@ -110,6 +115,7 @@ class Attendance {
       params
     );
   }
+
   /**
    * Mark all 'Not Checked In' records as 'Absent' for a given date.
    * Run this after shifts end (cron or manual trigger).

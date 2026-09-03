@@ -37,7 +37,7 @@ class User {
     if (filters.role) { conditions.push('role = ?'); params.push(filters.role); }
     if (filters.is_active !== undefined) { conditions.push('is_active = ?'); params.push(filters.is_active); }
 
-    if (conditions.length > 0) sql += ' WHERE ' + conditions.join(' AND ');
+    if (conditions.length > 0) sql += ` WHERE ${  conditions.join(' AND ')}`;
     sql += ' ORDER BY created_at DESC';
     return query(sql, params);
   }

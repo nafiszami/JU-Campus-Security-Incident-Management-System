@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 /**
  * Assignment API tests.
  *

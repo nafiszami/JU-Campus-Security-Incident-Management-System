@@ -116,8 +116,8 @@ async function getRestricted(req, res) {
     const results = await RestrictedVisitor.findAll({
       status,
       search,
-      limit: parseInt(limit),
-      offset: parseInt(offset),
+      limit: parseInt(limit, 10),
+      offset: parseInt(offset, 10),
     });
     res.json(results);
   } catch (error) {

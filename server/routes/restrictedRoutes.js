@@ -13,7 +13,9 @@
  * commented-out line below must be restored once auth is available.
  */
 
+/* eslint-disable no-unused-vars */
 const express = require('express');
+
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { authorize } = require('../middleware/role');
