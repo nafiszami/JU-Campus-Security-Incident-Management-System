@@ -13,6 +13,10 @@ jest.mock('../config/database', () => ({
   },
 }));
 
+// =============================================================================
+// Sprint 1 — POST /api/incidents (Submit Reports — Member 1 ARM)
+// =============================================================================
+
 describe('POST /api/incidents - Submit Reports API', () => {
   let token;
   const mockUser = { id: 1, role: 'Student' };
