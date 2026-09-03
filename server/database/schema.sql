@@ -213,13 +213,12 @@ INSERT INTO checkpoints (name, location, description) VALUES
 ('Library', 'Central Library', 'Security post at library entrance');
 
 -- Test Users (Password: Password123)
--- Replace with actual bcrypt hashes using node -e "const bcrypt = require('bcryptjs'); bcrypt.hash('Password123', 10).then(console.log);"
 INSERT INTO users (name, email, password_hash, role, is_head_security_officer, phone) VALUES 
-('Admin User', 'admin@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Admin', FALSE, '01700000000'), 
-('Security Officer', 'officer@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Security Officer', FALSE, '01700000001'), 
-('Gate Operator', 'gate@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Gate Operator', FALSE, '01700000002'), 
-('Guard 1', 'guard1@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Guard', FALSE, '01700000003'), 
-('Guard 2', 'guard2@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Guard', FALSE, '01700000004'), 
-('Student', 'student@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Student', FALSE, '01700000005'),
-('Security Officer 2', 'officer2@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Security Officer', TRUE, '01700000006'),
-('Security Officer 3', 'officer3@juniv.edu', '$2a$10$YourHashedPasswordHere', 'Security Officer', FALSE, '01700000007');
+('Admin User', 'admin@juniv.edu', '$2a$10$4teIgk/NT4NHVUT66L0OF.pyx8ZMirjhh4Wi8tXGDJzh2BK0gkrLS', 'Admin', FALSE, '01700000000'), 
+('Security Officer', 'officer@juniv.edu', '$2a$10$4teIgk/NT4NHVUT66L0OF.pyx8ZMirjhh4Wi8tXGDJzh2BK0gkrLS', 'Security Officer', FALSE, '01700000001'), 
+('Gate Operator', 'gate@juniv.edu', '$2a$10$4teIgk/NT4NHVUT66L0OF.pyx8ZMirjhh4Wi8tXGDJzh2BK0gkrLS', 'Gate Operator', FALSE, '01700000002'), 
+('Guard 1', 'guard1@juniv.edu', '$2a$10$4teIgk/NT4NHVUT66L0OF.pyx8ZMirjhh4Wi8tXGDJzh2BK0gkrLS', 'Guard', FALSE, '01700000003'), 
+('Guard 2', 'guard2@juniv.edu', '$2a$10$4teIgk/NT4NHVUT66L0OF.pyx8ZMirjhh4Wi8tXGDJzh2BK0gkrLS', 'Guard', FALSE, '01700000004'), 
+('Student', 'student@juniv.edu', '$2a$10$4teIgk/NT4NHVUT66L0OF.pyx8ZMirjhh4Wi8tXGDJzh2BK0gkrLS', 'Student', FALSE, '01700000005'),
+('Security Officer 2', 'officer2@juniv.edu', '$2a$10$4teIgk/NT4NHVUT66L0OF.pyx8ZMirjhh4Wi8tXGDJzh2BK0gkrLS', 'Security Officer', TRUE, '01700000006'),
+('Security Officer 3', 'officer3@juniv.edu', '$2a$10$4teIgk/NT4NHVUT66L0OF.pyx8ZMirjhh4Wi8tXGDJzh2BK0gkrLS', 'Security Officer', FALSE, '01700000007');
