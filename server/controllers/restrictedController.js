@@ -41,37 +41,48 @@ const userId = 1;
  */
 async function addRestricted(req, res) {
   try {
-    const { identity_number, name, phone, reason, restriction_type, start_date, end_date, remarks } = req.body;
+    const { 
+      identity_number: identityNumber, 
+      name, 
+      phone, 
+      reason, 
+      restriction_type: restrictionType, 
+      start_date: startDate, 
+      end_date: endDate, 
+      remarks 
+    } = req.body;
 
-    if (!identity_number || !name || !reason || !restriction_type || !start_date) {
+    if (!identityNumber || !name || !reason || !restrictionType || !startDate) {
       return res.status(400).json({
         error: 'Identity number, name, reason, restriction type, and start date are required',
       });
     }
 
-    if (!['Temporary', 'Permanent'].includes(restriction_type)) {
+    if (!['Temporary', 'Permanent'].includes(restrictionType)) {
       return res.status(400).json({ error: 'Invalid restriction type' });
     }
 
-    if (restriction_type === 'Temporary' && !end_date) {
+    if (restrictionType === 'Temporary' && !endDate) {
       return res.status(400).json({ error: 'End date is required for temporary restrictions' });
     }
 
-    const existing = await RestrictedVisitor.findByIdentity(identity_number);
+    const existing = await RestrictedVisitor.findByIdentity(identityNumber);
     if (existing && existing.is_active) {
       return res.status(409).json({ error: 'This person is already restricted' });
     }
 
     const restricted = await RestrictedVisitor.create({
-      identity_number,
+      /* eslint-disable camelcase */
+      identity_number: identityNumber,
       name,
       phone,
       reason,
-      restriction_type,
-      start_date,
-      end_date: end_date || null,
+      restriction_type: restrictionType,
+      start_date: startDate,
+      end_date: endDate || null,
       added_by: userId, // TEMPORARY: was req.user.id
       remarks,
+      /* eslint-enable camelcase */
     });
 
     // TEMPORARY: AuditLog not implemented yet — uncomment once merged.

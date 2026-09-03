@@ -80,24 +80,25 @@ async function checkToken(req, res) {
 
 async function changePassword(req, res) {
   try {
-    const { current_password, new_password } = req.body;
+    const { current_password: currentPassword, new_password: newPassword } = req.body;
     
-    if (!current_password || !new_password) {
+    if (!currentPassword || !newPassword) {
       return res.status(400).json({ error: 'Current password and new password are required' });
     }
-    if (new_password.length < 8) {
+    if (newPassword.length < 8) {
       return res.status(400).json({ error: 'New password must be at least 8 characters' });
     }
     
     const user = await User.findByEmail(req.user.email);
     if (!user) return res.status(404).json({ error: 'User not found' });
     
-    const isValidPassword = await bcrypt.compare(current_password, user.password_hash);
+    /* eslint-disable-next-line camelcase */
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
     
-    const hashedPassword = await bcrypt.hash(new_password, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     await User.updatePassword(req.user.id, hashedPassword);
     
     await AuditLog.log(req.user.id, 'PASSWORD_CHANGE', `User ${req.user.email} changed password`, req);
