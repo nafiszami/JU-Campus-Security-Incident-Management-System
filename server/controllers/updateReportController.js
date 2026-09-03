@@ -136,6 +136,12 @@ async function closeReport(req, res) {
 async function getReportForReview(req, res) {
   const incident = await findIncidentById(req.params.id);
 
+  if (!incident) {
+    return res.status(404).json({
+      error: 'Incident not found',
+    });
+  }
+
   const canView = req.user.is_head_security_officer
     || isAssignedOfficer(incident, req.user);
 
