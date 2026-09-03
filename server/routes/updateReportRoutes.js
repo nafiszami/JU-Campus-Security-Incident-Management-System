@@ -4,7 +4,11 @@ const { authenticate } = require('../middleware/auth');
 const { loadCurrentUser } = require('../middleware/loadCurrentUser');
 const { authorize } = require('../middleware/role');
 
-const { updateInvestigationStatus, closeReport } = require('../controllers/updateReportController');
+const {
+  updateInvestigationStatus,
+  closeReport,
+  getReportForReview,
+} = require('../controllers/updateReportController');
 
 const router = express.Router();
 
@@ -42,5 +46,17 @@ router.patch('/:id/status', updateInvestigationStatus);
  * @returns {Object} Updated incident report.
  */
 router.put('/:id/close', closeReport);
+
+/**
+ * Retrieves a report along with its assignment history and status
+ * history, for review before closure.
+ *
+ * @route GET /:id/review
+ * @middleware authenticate
+ * @middleware authorize
+ * @param {number} id - ID of the incident report.
+ * @returns {Object} Incident report with assignment and status history.
+ */
+router.get('/:id/review', getReportForReview);
 
 module.exports = router;

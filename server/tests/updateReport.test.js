@@ -3,10 +3,12 @@ const request = require('supertest');
 jest.mock('../models/IncidentQuery', () => ({
   findIncidentById: jest.fn(),
   updateIncidentStatusFields: jest.fn(),
+  findAssignmentHistoryForIncident: jest.fn(),
 }));
 
 jest.mock('../models/AuditLog', () => ({
   recordAuditEntry: jest.fn(),
+  findAuditHistoryForReport: jest.fn(),
 }));
 
 jest.mock('../middleware/auth', () => ({
@@ -52,9 +54,10 @@ app.use('/api/reports', updateReportRoutes);
 const {
   findIncidentById,
   updateIncidentStatusFields,
+  findAssignmentHistoryForIncident,
 } = require('../models/IncidentQuery');
 
-const { recordAuditEntry } = require('../models/AuditLog');
+const { recordAuditEntry, findAuditHistoryForReport } = require('../models/AuditLog');
 
 const { authenticate } = require('../middleware/auth');
 const { loadCurrentUser } = require('../middleware/loadCurrentUser');
@@ -251,6 +254,40 @@ describe('Update Report API', () => {
 
     expect(res.status).toBe(400);
     expect(updateIncidentStatusFields).not.toHaveBeenCalled();
+  });
+
+    /**
+   * The Security Officer currently assigned to a report can review
+   * it - seeing the report, its assignment history, and its status
+   * history together.
+   */
+  it('should allow the assigned officer to review their own report', async () => {
+    findIncidentById.mockResolvedValue({ ...incident, status: 'Resolved' });
+    findAssignmentHistoryForIncident.mockResolvedValue([{ id: 1, assigned_to_name: 'Officer Five' }]);
+    findAuditHistoryForReport.mockResolvedValue([{ id: 1, action: 'UPDATE_STATUS' }]);
+
+    const res = await request(app).get('/api/reports/4/review');
+
+    expect(res.status).toBe(200);
+    expect(res.body.report.report_id).toBe('INC-2026-0004');
+    expect(res.body.assignmentHistory).toHaveLength(1);
+    expect(res.body.statusHistory).toHaveLength(1);
+  });
+
+  /**
+   * A Head Security Officer can review any report, not just ones
+   * assigned to them.
+   */
+  it('should allow a Head Security Officer to review any report', async () => {
+    loginAs(headOfficer);
+    findIncidentById.mockResolvedValue({ ...incident, status: 'Resolved', assigned_to: 5 });
+    findAssignmentHistoryForIncident.mockResolvedValue([]);
+    findAuditHistoryForReport.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/reports/4/review');
+
+    expect(res.status).toBe(200);
+    expect(res.body.report.report_id).toBe('INC-2026-0004');
   });
   
 });

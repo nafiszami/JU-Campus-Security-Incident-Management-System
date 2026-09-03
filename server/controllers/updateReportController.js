@@ -1,9 +1,10 @@
 const {
   findIncidentById,
   updateIncidentStatusFields,
+  findAssignmentHistoryForIncident,
 } = require('../models/IncidentQuery');
 
-const { recordAuditEntry } = require('../models/AuditLog');
+const { recordAuditEntry, findAuditHistoryForReport } = require('../models/AuditLog');
 
 /**
  * Maps each status to the single status it is allowed to move to
@@ -39,15 +40,15 @@ async function updateInvestigationStatus(req, res) {
   const { status: nextStatus, investigationSummary } = req.body;
   const incident = await findIncidentById(id);
 
-  if (incident.status === 'Closed') {
-    return res.status(400).json({
-      error: 'This report is closed and cannot be modified.',
+ if (!isAssignedOfficer(incident, req.user)) {
+    return res.status(403).json({
+      error: 'Only the assigned Security Officer can update this report.',
     });
   }
 
-  if (!isAssignedOfficer(incident, req.user)) {
-    return res.status(403).json({
-      error: 'Only the assigned Security Officer can update this report.',
+  if (incident.status === 'Closed') {
+    return res.status(400).json({
+      error: 'This report is closed and cannot be modified.',
     });
   }
 
@@ -89,15 +90,15 @@ async function closeReport(req, res) {
   const { id } = req.params;
   const incident = await findIncidentById(id);
 
-  if (incident.status === 'Closed') {
-    return res.status(400).json({
-      error: 'This report is already closed.',
-    });
-  }
-
   if (req.user.role !== 'Security Officer' || !req.user.is_head_security_officer) {
     return res.status(403).json({
       error: 'Only the Head Security Officer can close this report.',
+    });
+  }
+
+  if (incident.status === 'Closed') {
+    return res.status(400).json({
+      error: 'This report is already closed.',
     });
   }
 
@@ -121,7 +122,43 @@ async function closeReport(req, res) {
   return res.json(updated);
 }
 
+/**
+ * Retrieves a report along with its assignment history and status
+ * history, for review before closure.
+ *
+ * The Security Officer currently assigned to the report can review
+ * it, and a Head Security Officer can review any report.
+ *
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @returns {Promise<Object>} JSON response containing the report and its history.
+ */
+async function getReportForReview(req, res) {
+  const incident = await findIncidentById(req.params.id);
+
+  const canView = req.user.is_head_security_officer
+    || isAssignedOfficer(incident, req.user);
+
+  if (!canView) {
+    return res.status(403).json({
+      error: 'You can only review reports assigned to you.',
+    });
+  }
+
+  const [assignmentHistory, statusHistory] = await Promise.all([
+    findAssignmentHistoryForIncident(req.params.id),
+    findAuditHistoryForReport(incident.report_id),
+  ]);
+
+  return res.json({
+    report: incident,
+    assignmentHistory,
+    statusHistory,
+  });
+}
+
 module.exports = {
   updateInvestigationStatus,
   closeReport,
+  getReportForReview,
 };
