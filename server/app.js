@@ -1,8 +1,7 @@
-require('dotenv').config();
-
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+require('dotenv').config();
 
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -12,7 +11,7 @@ const incidentRoutes = require('./routes/incidentRoutes');
 const visitorRoutes = require('./routes/visitorRoutes');
 const restrictedRoutes = require('./routes/restrictedRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
-const assignmentRoutes = require('./routes/assignmentRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -20,8 +19,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Serve static uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check
@@ -35,7 +32,7 @@ app.use('/api/incidents', incidentRoutes);
 app.use('/api/visitors', visitorRoutes);
 app.use('/api/restricted', restrictedRoutes);
 app.use('/api/schedules', scheduleRoutes);
-app.use('/api/assignments', assignmentRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
