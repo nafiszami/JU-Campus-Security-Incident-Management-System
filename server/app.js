@@ -13,6 +13,7 @@ const visitorRoutes = require('./routes/visitorRoutes');
 const restrictedRoutes = require('./routes/restrictedRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
+const updateReportRoutes = require('./routes/updateReportRoutes');
 
 const app = express();
 
@@ -36,7 +37,7 @@ app.use('/api/visitors', visitorRoutes);
 app.use('/api/restricted', restrictedRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/assignments', assignmentRoutes);
-
+app.use('/api/update-reports', updateReportRoutes);
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });

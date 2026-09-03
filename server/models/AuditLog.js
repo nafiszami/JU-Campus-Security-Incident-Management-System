@@ -144,6 +144,25 @@ async function recordAuditEntry(userId, action, description) {
   return result.insertId;
 }
 
+/**
+ * Finds audit history entries related to a specific report.
+ *
+ * @param {string} reportId - Report ID to search for.
+ * @returns {Promise<Array>} Audit history entries related to the report.
+ */
+async function findAuditHistoryForReport(reportId) {
+  const sql = `
+    SELECT a.*, u.name AS user_name, u.email AS user_email
+    FROM audit_logs a
+    LEFT JOIN users u ON a.user_id = u.id
+    WHERE a.description LIKE ?
+    ORDER BY a.created_at ASC
+  `;
+
+  return query(sql, [`%${reportId}%`]);
+}
+
 module.exports = AuditLog;
 module.exports.AuditLog = AuditLog;
 module.exports.recordAuditEntry = recordAuditEntry;
+module.exports.findAuditHistoryForReport = findAuditHistoryForReport;
