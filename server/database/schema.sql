@@ -219,6 +219,54 @@ CREATE TABLE audit_logs (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- Vehicle Entries Table
+CREATE TABLE IF NOT EXISTS vehicle_entries (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  pass_number VARCHAR(30) UNIQUE NOT NULL,
+  plate_number VARCHAR(50) NOT NULL,
+  vehicle_type ENUM('Car', 'Motorcycle', 'Microbus', 'Truck', 'Official', 'Emergency', 'Delivery', 'Other') NOT NULL,
+  category ENUM('Student', 'Faculty/Staff', 'Visitor', 'Official', 'Delivery/Service', 'Emergency') NOT NULL,
+  driver_name VARCHAR(255) NOT NULL,
+  driver_phone VARCHAR(20) NOT NULL,
+  driver_identity VARCHAR(50) NULL,
+  purpose VARCHAR(255) NULL,
+  host_or_destination VARCHAR(255) NULL,
+  status ENUM('Inside', 'Exited') DEFAULT 'Inside',
+  entry_time DATETIME NOT NULL,
+  exit_time DATETIME NULL,
+  entry_gate VARCHAR(100) NOT NULL,
+  exit_gate VARCHAR(100) NULL,
+  entered_by INT NOT NULL,
+  exited_by INT NULL,
+  pass_valid_until DATETIME NULL,
+  is_emergency BOOLEAN DEFAULT FALSE,
+  duration_minutes INT NULL,
+  remarks TEXT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_plate (plate_number),
+  INDEX idx_status (status),
+  INDEX idx_category (category),
+  INDEX idx_entry_time (entry_time),
+  FOREIGN KEY (entered_by) REFERENCES users(id),
+  FOREIGN KEY (exited_by) REFERENCES users(id)
+);
+
+-- Restricted Vehicles Table
+CREATE TABLE IF NOT EXISTS restricted_vehicles (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  plate_number VARCHAR(50) UNIQUE NOT NULL,
+  reason TEXT NOT NULL,
+  restriction_type ENUM('Temporary', 'Permanent') NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  added_by INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_plate (plate_number),
+  INDEX idx_active (is_active),
+  FOREIGN KEY (added_by) REFERENCES users(id)
+);
+
 -- Checkpoint Seed Data
 INSERT INTO checkpoints (name, location, description) VALUES
 ('Main Gate', 'University Main Entrance', 'Primary entry point for vehicles and pedestrians'),
