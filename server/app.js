@@ -15,6 +15,7 @@ const scheduleRoutes = require('./routes/scheduleRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
 const updateReportRoutes = require('./routes/updateReportRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
+const vehicleRoutes = require('./routes/vehicleRoutes');
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/api/schedules', scheduleRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/update-reports', updateReportRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/vehicles', vehicleRoutes);
 
 // 404 handler
 app.use((req, res) => {
