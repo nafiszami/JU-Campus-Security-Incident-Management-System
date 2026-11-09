@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import VisitorRegistration from './components/visitors/VisitorRegistration';
 import VisitorSearch from './components/visitors/VisitorSearch';
 import VisitorEntryExit from './components/visitors/VisitorEntryExit';
+import VehicleEntryExitScreen from './components/vehicles/VehicleEntryExitScreen';
 import LoginPage from './pages/LoginPage';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Link to="/">Register</Link>
           <Link to="/search">Search</Link>
           <Link to="/entry-exit">Entry/Exit</Link>
+          <Link to="/vehicles">Vehicles</Link>
           <div style={{ flex: 1 }}></div>
           {localStorage.getItem('token') ? (
             <button onClick={handleLogout} style={{ padding: '5px 10px', cursor: 'pointer' }}>Logout</button>
@@ -32,6 +34,7 @@ function App() {
           <Route path="/" element={<VisitorRegistration />} />
           <Route path="/search" element={<VisitorSearch />} />
           <Route path="/entry-exit" element={<VisitorEntryExit />} />
+          <Route path="/vehicles" element={<VehicleEntryExitScreen />} />
         </Routes>
       </div>
     </Router>
